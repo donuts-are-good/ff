@@ -119,22 +119,6 @@ func findByContents(keyword string, path string, hidden bool) {
 			}
 			defer file.Close()
 
-			// // Read a small portion to determine file type
-			// buffer := make([]byte, 512)
-			// _, err = file.Read(buffer)
-			// if err != nil {
-			// 	return nil
-			// }
-			// contentType := http.DetectContentType(buffer)
-
-			// // If it's a binary file, skip it
-			// if strings.HasPrefix(contentType, "application/") {
-			// 	return nil
-			// }
-
-			// // Reset the read pointer
-			// file.Seek(0, 0)
-
 			// Read the entire file
 			content, err := io.ReadAll(file)
 			if err != nil {
