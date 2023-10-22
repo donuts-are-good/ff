@@ -1,10 +1,9 @@
 package main
 
 import (
-	"bufio"
 	"flag"
 	"fmt"
-	"net/http"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -120,29 +119,32 @@ func findByContents(keyword string, path string, hidden bool) {
 			}
 			defer file.Close()
 
-			// Read a small portion to determine file type
-			buffer := make([]byte, 512)
-			_, err = file.Read(buffer)
+			// // Read a small portion to determine file type
+			// buffer := make([]byte, 512)
+			// _, err = file.Read(buffer)
+			// if err != nil {
+			// 	return nil
+			// }
+			// contentType := http.DetectContentType(buffer)
+
+			// // If it's a binary file, skip it
+			// if strings.HasPrefix(contentType, "application/") {
+			// 	return nil
+			// }
+
+			// // Reset the read pointer
+			// file.Seek(0, 0)
+
+			// Read the entire file
+			content, err := io.ReadAll(file)
 			if err != nil {
 				return nil
 			}
-			contentType := http.DetectContentType(buffer)
 
-			// If it's a binary file, skip it
-			if strings.HasPrefix(contentType, "application/") {
-				return nil
-			}
-
-			// Reset the read pointer
-			file.Seek(0, 0)
-
-			scanner := bufio.NewScanner(file)
-			for scanner.Scan() {
-				if strings.Contains(scanner.Text(), keyword) {
-					fmt.Printf("%d) %s\n", count, path)
-					count++
-					break
-				}
+			// If the file contains the keyword, print the path
+			if strings.Contains(string(content), keyword) {
+				fmt.Printf("%d) %s\n", count, path)
+				count++
 			}
 		}
 		return nil
