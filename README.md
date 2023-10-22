@@ -1,4 +1,4 @@
-
+![ff-logo](https://github.com/donuts-are-good/ff/assets/96031819/ff671f24-be14-472c-9024-f12708d35716)
 ![donuts-are-good's followers](https://img.shields.io/github/followers/donuts-are-good?&color=555&style=for-the-badge&label=followers) ![donuts-are-good's stars](https://img.shields.io/github/stars/donuts-are-good?affiliations=OWNER%2CCOLLABORATOR&color=555&style=for-the-badge) ![donuts-are-good's visitors](https://komarev.com/ghpvc/?username=donuts-are-good&color=555555&style=for-the-badge&label=visitors)
 
 # ff
@@ -42,3 +42,6 @@ Search for hidden files with "config" in the name in the home directory:
 ff --name "config" --hidden ~/
 ```
 
+## license
+
+mit license 2023 donuts-are-good, for more info see license.md
