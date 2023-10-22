@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"flag"
 	"fmt"
-	"log"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -12,17 +12,22 @@ import (
 )
 
 func main() {
+
+	// define the flags
 	namePtr := flag.String("name", "", "keyword to search in file names")
 	contentsPtr := flag.String("contents", "", "keyword to search in file contents")
 	hiddenPtr := flag.Bool("hidden", false, "include hidden files in the search")
 
+	// parse the flags
 	flag.Parse()
 
+	// unless a path is specified, assume it is /
 	path := "/"
 	if flag.NArg() > 0 {
 		path = flag.Arg(0)
 	}
 
+	// check if we're looking in names or contents
 	if *namePtr != "" {
 		findByName(*namePtr, path, *hiddenPtr)
 	} else if *contentsPtr != "" {
@@ -32,6 +37,7 @@ func main() {
 	}
 }
 
+// formatDuration measures how long the operation took and returns it as a human readable amount of time
 func formatDuration(d time.Duration) string {
 	d = d.Round(time.Second)
 	h := d / time.Hour
@@ -48,22 +54,30 @@ func formatDuration(d time.Duration) string {
 	return fmt.Sprintf("%ds", s)
 }
 
+// findByName will search for a substring in the filename
 func findByName(keyword string, path string, hidden bool) {
+
+	// we use count for the result numbers and final count
 	var count int
+
+	// this is when we start counting the duration of the operation
 	start := time.Now()
+
+	// walk the path recursively through the files
 	err := filepath.Walk(path, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
-			if !strings.Contains(err.Error(), "operation not permitted") {
-				log.Printf("Error accessing path %s: %v\n", path, err)
-			}
 			return nil
 		}
+
+		// if we're not doing hidden files, skip it
 		if !hidden && strings.HasPrefix(info.Name(), ".") {
 			if info.IsDir() {
 				return filepath.SkipDir
 			}
 			return nil
 		}
+
+		// if we have a positive result...
 		if strings.Contains(info.Name(), keyword) {
 			fmt.Printf("%d) %s\n", count, path)
 			count++
@@ -72,7 +86,6 @@ func findByName(keyword string, path string, hidden bool) {
 	})
 
 	if err != nil {
-		log.Printf("Error walking the path %s: %v\n", path, err)
 		return
 	}
 
@@ -80,6 +93,7 @@ func findByName(keyword string, path string, hidden bool) {
 		fmt.Printf("No files found with the name containing '%s'.\n", keyword)
 	}
 
+	// this is how long the operation took
 	elapsed := time.Since(start)
 	fmt.Printf("\n%d files found in %s\n", count, formatDuration(elapsed))
 
@@ -91,9 +105,6 @@ func findByContents(keyword string, path string, hidden bool) {
 
 	err := filepath.Walk(path, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
-			if !strings.Contains(err.Error(), "operation not permitted") {
-				log.Printf("Error accessing path %s: %v\n", path, err)
-			}
 			return nil
 		}
 		if !hidden && strings.HasPrefix(info.Name(), ".") {
@@ -105,13 +116,25 @@ func findByContents(keyword string, path string, hidden bool) {
 		if !info.IsDir() {
 			file, err := os.Open(path)
 			if err != nil {
-				if !strings.Contains(err.Error(), "operation not permitted") {
-					log.Printf("Error opening file %s: %v\n", path, err)
-				}
+				return nil
+			}
+			defer file.Close()
+
+			// Read a small portion to determine file type
+			buffer := make([]byte, 512)
+			_, err = file.Read(buffer)
+			if err != nil {
+				return nil
+			}
+			contentType := http.DetectContentType(buffer)
+
+			// If it's a binary file, skip it
+			if strings.HasPrefix(contentType, "application/") {
 				return nil
 			}
 
-			defer file.Close()
+			// Reset the read pointer
+			file.Seek(0, 0)
 
 			scanner := bufio.NewScanner(file)
 			for scanner.Scan() {
@@ -121,15 +144,11 @@ func findByContents(keyword string, path string, hidden bool) {
 					break
 				}
 			}
-			if err := scanner.Err(); err != nil {
-				log.Printf("Error reading file %s: %v\n", path, err)
-			}
 		}
 		return nil
 	})
 
 	if err != nil {
-		log.Printf("Error walking the path %s: %v\n", path, err)
 		return
 	}
 
@@ -139,5 +158,4 @@ func findByContents(keyword string, path string, hidden bool) {
 
 	elapsed := time.Since(start)
 	fmt.Printf("\n%d files found in %s\n", count, formatDuration(elapsed))
-
 }
