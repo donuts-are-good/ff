@@ -7,11 +7,11 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 )
 
 func main() {
-
 	// define the flags
 	namePtr := flag.String("name", "", "keyword to search in file names")
 	contentsPtr := flag.String("contents", "", "keyword to search in file contents")
@@ -27,12 +27,23 @@ func main() {
 	}
 
 	// check if we're looking in names or contents
-	if *namePtr != "" {
+	switch {
+	case *namePtr != "":
 		findByName(*namePtr, path, *hiddenPtr)
-	} else if *contentsPtr != "" {
+	case *contentsPtr != "":
 		findByContents(*contentsPtr, path, *hiddenPtr)
-	} else {
-		fmt.Println("Invalid search type. Use --name or --contents.")
+	default:
+		var wg sync.WaitGroup
+		wg.Add(2)
+		go func() {
+			defer wg.Done()
+			findByName(flag.Arg(1), path, *hiddenPtr)
+		}()
+		go func() {
+			defer wg.Done()
+			findByContents(flag.Arg(1), path, *hiddenPtr)
+		}()
+		wg.Wait()
 	}
 }
 
