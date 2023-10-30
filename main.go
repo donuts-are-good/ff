@@ -47,26 +47,8 @@ func main() {
 	}
 }
 
-// formatDuration measures how long the operation took and returns it as a human readable amount of time
-func formatDuration(d time.Duration) string {
-	d = d.Round(time.Second)
-	h := d / time.Hour
-	d -= h * time.Hour
-	m := d / time.Minute
-	d -= m * time.Minute
-	s := d / time.Second
-	if h > 0 {
-		return fmt.Sprintf("%dh %dm %ds", h, m, s)
-	}
-	if m > 0 {
-		return fmt.Sprintf("%dm %ds", m, s)
-	}
-	return fmt.Sprintf("%ds", s)
-}
-
 // findByName will search for a substring in the filename
 func findByName(keyword string, path string, hidden bool) {
-
 	// we use count for the result numbers and final count
 	var count int
 
@@ -105,8 +87,7 @@ func findByName(keyword string, path string, hidden bool) {
 
 	// this is how long the operation took
 	elapsed := time.Since(start)
-	fmt.Printf("\n%d files found in %s\n", count, formatDuration(elapsed))
-
+	fmt.Printf("\n%d files found in %s\n", count, elapsed.Truncate(10*time.Millisecond))
 }
 
 func findByContents(keyword string, path string, hidden bool) {
@@ -154,5 +135,5 @@ func findByContents(keyword string, path string, hidden bool) {
 	}
 
 	elapsed := time.Since(start)
-	fmt.Printf("\n%d files found in %s\n", count, formatDuration(elapsed))
+	fmt.Printf("\n%d files found in %s\n", count, elapsed.Truncate(10*time.Millisecond))
 }
